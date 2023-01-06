@@ -34,6 +34,12 @@ A small language with only 8 commands, encoded as the characters `>`, `<`, `+`, 
 
 https://en.wikipedia.org/wiki/Brainfuck
 
+### Hello World
+
+```
+++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
+```
+
 ### Interpreter
 
 `github.com/jmhobbs/little-machines/brainfuck/cmd/bf` is an interpreter
