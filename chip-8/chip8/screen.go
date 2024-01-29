@@ -24,14 +24,14 @@ func (s *screen) Write(sprites []byte, x, y uint8) bool {
 		if !collision && s[(y+i)*8+x]&sprites[i] != 0 {
 			collision = true
 		}
-		
+
 		if n == 0 {
 			// byte aligned, we only deal with x1
 			s[(y+i)*8+x1] = s[(y+i)*8+x1] ^ sprites[i]
 		} else {
 			// not byte aligned, we do both
 			s[(y+i)*8+x1] = s[(y+i)*8+x1] ^ (sprites[i] >> n)
-			s[(y+i)*8+x2] = s[(y+i)*8+x2] ^ (sprites[i] << (8-n))
+			s[(y+i)*8+x2] = s[(y+i)*8+x2] ^ (sprites[i] << (8 - n))
 		}
 	}
 
@@ -53,4 +53,9 @@ func (s *screen) String() string {
 	}
 
 	return b.String()
+}
+
+func (s *screen) Bytes() [256]uint8 {
+	b := *s
+	return b
 }

@@ -1,6 +1,7 @@
 package chip8
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 )
@@ -8,8 +9,10 @@ import (
 // Based almost entirely on http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 
 type Machine interface {
-	Run() error
+	Run(context.Context) error
+	Screen() [256]uint8
 	Step() error
+	State() State
 }
 
 func New(pgm []byte) (Machine, error) {
@@ -59,14 +62,45 @@ type machine struct {
 	ST     uint8      // Sound Timer, decremented at 60hz until 0
 }
 
-func (m *machine) Run() error {
+type State struct {
+	stack [16]uint16 // Stack
+	PC    uint16     // Program counter
+	SP    uint8      // Stack pointer
+	V     [16]uint8  // General purpose registers 0-F
+	I     uint16     // Memory address register (12 bit addresses)
+	DT    uint8      // Delay Timer, decremented at 60hz until 0
+	ST    uint8      // Sound Timer, decremented at 60hz until 0
+}
+
+func (m *machine) Screen() [256]uint8 {
+	return m.screen.Bytes()
+}
+
+func (m *machine) State() State {
+	return State{
+		stack: m.stack,
+		PC:    m.PC,
+		SP:    m.SP,
+		V:     m.V,
+		I:     m.I,
+		DT:    m.DT,
+		ST:    m.ST,
+	}
+}
+
+func (m *machine) Run(ctx context.Context) error {
 	// todo: DT & ST decay at 60hz
 	// todo: run at 500hz
 	var err error
 	for {
-		err = m.Step()
-		if err != nil {
-			return err
+		select {
+		case <-ctx.Done():
+			return nil // returning not to leak the goroutine
+		default:
+			err = m.Step()
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -116,8 +150,6 @@ const (
 func (m *machine) Step() error {
 	advPC := true
 	op := (uint16(m.memory[m.PC]) << 8) | uint16(m.memory[m.PC+1])
-
-	fmt.Printf("0x%04X: 0x%04X\n", m.PC, op)
 
 	// todo: there must be some bit matching that is better than this nested mess
 	upperNibble := op >> 12
