@@ -170,13 +170,24 @@ func (m *model) View() string {
 		b.WriteString("<none>")
 	}
 
+	leftColumn := []string{
+		screenArea,
+		b.String(),
+		"R - Run  S - Step  P - Pause",
+	}
+
+	if m.lastErr != nil {
+		leftColumn = append(
+			leftColumn,
+			lipgloss.NewStyle().Foreground(lipgloss.Color("#AA0000")).Render(m.lastErr.Error()),
+		)
+	}
+
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			screenArea,
-			b.String(),
-			"R - Run  S - Step  P - Pause",
+			leftColumn...,
 		),
 		lipgloss.JoinVertical(
 			lipgloss.Left,
