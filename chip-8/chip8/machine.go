@@ -275,11 +275,9 @@ func (m *machine) Step() error {
 	} else if upperNibble == 0xF && lowerByte == LD_FONT { // Fx29
 		m.I = uint16(m.V[x(op)] & 0x0F * 8)
 	} else if upperNibble == 0xF && lowerByte == LD_BCD { // Fx33
-		/* TODO:
-		The interpreter takes the decimal value of Vx, and places the hundreds
-		digit in memory at location in I, the tens digit at location I+1, and
-		the ones digit at location I+2.
-		*/
+		m.memory[m.I] = m.V[x(op)] / 100
+		m.memory[m.I+1] = (m.V[x(op)] % 100) / 10
+		m.memory[m.I+2] = ((m.V[x(op)] % 100) % 10) / 1
 	} else if upperNibble == 0xF && lowerByte == LD_V_MEM { // Fx55
 		for x := uint16(0); x < 16; x++ {
 			m.memory[m.I+x] = m.V[x]
