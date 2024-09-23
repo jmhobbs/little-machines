@@ -9,7 +9,7 @@ import (
 func Test_PointerAdvance(t *testing.T) {
 	i := &interpreter{
 		m:       NewMachine(300),
-		program: []byte("++>[++[>+<]--<]"),
+		program: []Token("++>[++[>+<]--<]"),
 		ptr:     0,
 	}
 
@@ -23,7 +23,7 @@ func Test_PointerAdvance(t *testing.T) {
 func Test_IncrementAndDecrement(t *testing.T) {
 	i := &interpreter{
 		m:       NewMachine(300),
-		program: []byte("++-"),
+		program: []Token("++-"),
 		ptr:     0,
 	}
 
@@ -38,7 +38,7 @@ func Test_IncrementAndDecrement(t *testing.T) {
 func Test_MemoryPointerIncrementAndDecrement(t *testing.T) {
 	i := &interpreter{
 		m:       NewMachine(300),
-		program: []byte("+>++<"),
+		program: []Token("+>++<"),
 		ptr:     0,
 	}
 
@@ -49,41 +49,41 @@ func Test_MemoryPointerIncrementAndDecrement(t *testing.T) {
 func Test_FindLoopEnd(t *testing.T) {
 	i := &interpreter{
 		m:       NewMachine(300),
-		program: []byte("++>[++[>+<]--<]"),
+		program: []Token("++>[++[>+<]--<]"),
 		ptr:     3,
 	}
 
 	actual, err := i.findLoopEnd()
 	if assert.NoError(t, err) {
 		assert.Equal(t, uint(14), actual)
-		assert.Equal(t, byte(']'), i.program[actual])
+		assert.Equal(t, JumpBackward, i.program[actual])
 	}
 
 	i.ptr = 6
 	actual, err = i.findLoopEnd()
 	if assert.NoError(t, err) {
 		assert.Equal(t, uint(10), actual)
-		assert.Equal(t, byte(']'), i.program[actual])
+		assert.Equal(t, JumpBackward, i.program[actual])
 	}
 }
 
 func Test_FindLoopStart(t *testing.T) {
 	i := &interpreter{
 		m:       NewMachine(300),
-		program: []byte("++>[++[>+<]--<]"),
+		program: []Token("++>[++[>+<]--<]"),
 		ptr:     14,
 	}
 
 	actual, err := i.findLoopStart()
 	if assert.NoError(t, err) {
 		assert.Equal(t, uint(3), actual)
-		assert.Equal(t, byte('['), i.program[actual])
+		assert.Equal(t, JumpForward, i.program[actual])
 	}
 
 	i.ptr = 10
 	actual, err = i.findLoopStart()
 	if assert.NoError(t, err) {
 		assert.Equal(t, uint(6), actual)
-		assert.Equal(t, byte('['), i.program[actual])
+		assert.Equal(t, JumpForward, i.program[actual])
 	}
 }

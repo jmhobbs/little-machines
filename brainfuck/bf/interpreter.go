@@ -15,9 +15,9 @@ func read() byte {
 	return byte(r)
 }
 
-func NewInterpreter(size uint, program []byte) Interpreter {
+func NewInterpreter(size uint, program []Token) Interpreter {
 	return &interpreter{
-		m:       NewMachine(300),
+		m:       NewMachine(size),
 		program: program,
 		ptr:     0,
 	}
@@ -31,7 +31,7 @@ type Interpreter interface {
 
 type interpreter struct {
 	m       Machine
-	program []byte
+	program []Token
 	ptr     uint
 }
 
@@ -48,19 +48,19 @@ func (i *interpreter) Dump(start, end uint) []byte {
 
 func (i *interpreter) Step() {
 	switch i.program[i.ptr] {
-	case '>':
+	case MoveRight:
 		i.m.PtrIncr()
-	case '<':
+	case MoveLeft:
 		i.m.PtrDecr()
-	case '+':
+	case Increment:
 		i.m.Incr()
-	case '-':
+	case Decrement:
 		i.m.Decr()
-	case '.':
+	case Output:
 		fmt.Print(string(i.m.Peek()))
-	case ',':
+	case Input:
 		i.m.Put(read())
-	case '[':
+	case JumpForward:
 		if i.m.Peek() == 0 {
 			n, err := i.findLoopEnd()
 			if err != nil {
@@ -68,7 +68,7 @@ func (i *interpreter) Step() {
 			}
 			i.ptr = n
 		}
-	case ']':
+	case JumpBackward:
 		// todo: optimize the check here instead
 		n, err := i.findLoopStart()
 		if err != nil {
@@ -85,9 +85,9 @@ func (i *interpreter) findLoopEnd() (uint, error) {
 	length := uint(len(i.program))
 	openLoops := 0
 	for j := i.ptr + 1; j < length; j++ {
-		if i.program[j] == '[' {
+		if i.program[j] == JumpForward {
 			openLoops++
-		} else if i.program[j] == ']' {
+		} else if i.program[j] == JumpBackward {
 			if openLoops == 0 {
 				return j, nil
 			}
@@ -101,9 +101,9 @@ func (i *interpreter) findLoopStart() (uint, error) {
 	length := uint(len(i.program))
 	openLoops := 0
 	for j := i.ptr - 1; j < length; j-- {
-		if i.program[j] == ']' {
+		if i.program[j] == JumpBackward {
 			openLoops++
-		} else if i.program[j] == '[' {
+		} else if i.program[j] == JumpForward {
 			if openLoops == 0 {
 				return j, nil
 			}

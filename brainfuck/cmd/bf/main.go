@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/jmhobbs/little-machines/brainfuck/bf"
 )
@@ -19,7 +19,13 @@ func main() {
 
 	flag.Parse()
 
-	program, err := ioutil.ReadFile(flag.Arg(0))
+	f, err := os.Open(flag.Arg(0))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	program, err := bf.Tokenize(f)
 	if err != nil {
 		panic(err)
 	}
