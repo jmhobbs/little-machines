@@ -61,3 +61,20 @@ usage: bf2go [options]
   -memory-size uint
        number of memory cells to use (default 300)
 ```
+
+## Ook!
+
+Ook! is identical to Brainfuck, but the instructions are "Orangutan" words (i.e. `Ook! Ook?`)
+
+https://esolangs.org/wiki/Ook!
+
+### Interpreter
+
+`github.com/jmhobbs/little-machines/brainfuck/cmd/ook` is an interpreter
+
+```
+usage: ook [options] <program file>
+
+  -memory-size uint
+       number of memory cells to use (default 300)
+```

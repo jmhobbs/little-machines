@@ -16,6 +16,7 @@ const (
 	Input        Token = 44 // ,
 	JumpForward  Token = 91 // [
 	JumpBackward Token = 93 // ]
+	Noop         Token = 0
 )
 
 type Tokenizer func(io.Reader) ([]Token, error)
