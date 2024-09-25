@@ -124,16 +124,17 @@ const (
 	JP_V0 uint16 = 0xB
 	RND   uint16 = 0xC
 	DRW   uint16 = 0xD
-	// Lower nibble, 8__N
-	LD_V   uint8 = 0x00
-	OR_V   uint8 = 0x01
-	AND_V  uint8 = 0x02
-	XOR_V  uint8 = 0x03
-	ADD_V  uint8 = 0x04
-	SUB_V  uint8 = 0x05
-	SHR_V  uint8 = 0x06
-	SUBN_V uint8 = 0x07
-	SHL_V  uint8 = 0x08
+	// Lower nibble, 8_N_
+	// TODO: Fix all of these
+	LD_V   uint8 = 0x0
+	OR_V   uint8 = 0x1
+	AND_V  uint8 = 0x2
+	XOR_V  uint8 = 0x3
+	ADD_V  uint8 = 0x4
+	SUB_V  uint8 = 0x5
+	SHR_V  uint8 = 0x6
+	SUBN_V uint8 = 0x7
+	SHL_V  uint8 = 0x8
 	// Lower byte, E_NN
 	SKP  uint8 = 0x9E
 	SKNP uint8 = 0xA1
@@ -189,15 +190,15 @@ func (m *machine) Step() error {
 		m.V[x(op)] = kk(op)
 	} else if upperNibble == ADD { // 7xkk
 		m.V[x(op)] += kk(op)
-	} else if upperNibble == 0x8 && lowerByte == LD_V { // 8xy0
+	} else if upperNibble == 0x8 && lowerByte&0x0F == LD_V { // 8xy0
 		m.V[x(op)] = m.V[y(op)]
-	} else if upperNibble == 0x8 && lowerByte == OR_V { // 8xy1
+	} else if upperNibble == 0x8 && lowerByte&0x0F == OR_V { // 8xy1
 		m.V[x(op)] = m.V[x(op)] | m.V[y(op)]
-	} else if upperNibble == 0x8 && lowerByte == AND_V { // 8xy2
+	} else if upperNibble == 0x8 && lowerByte&0x0F == AND_V { // 8xy2
 		m.V[x(op)] = m.V[x(op)] & m.V[y(op)]
-	} else if upperNibble == 0x8 && lowerByte == XOR_V { // 8xy3
+	} else if upperNibble == 0x8 && lowerByte&0x0F == XOR_V { // 8xy3
 		m.V[x(op)] = m.V[x(op)] ^ m.V[y(op)]
-	} else if upperNibble == 0x8 && lowerByte == ADD_V { // 8xy4
+	} else if upperNibble == 0x8 && lowerByte&0x0F == ADD_V { // 8xy4
 		v := uint16(m.V[x(op)]) + uint16(m.V[y(op)])
 		if v > 255 {
 			m.V[0xF] = 1
@@ -205,7 +206,7 @@ func (m *machine) Step() error {
 			m.V[0xF] = 0
 		}
 		m.V[x(op)] = uint8(v)
-	} else if upperNibble == 0x8 && lowerByte == SUB_V { // 8xy5
+	} else if upperNibble == 0x8 && lowerByte&0x0F == SUB_V { // 8xy5
 		X := m.V[x(op)]
 		Y := m.V[y(op)]
 		if X > Y {
@@ -214,7 +215,7 @@ func (m *machine) Step() error {
 			m.V[0xF] = 0
 		}
 		m.V[x(op)] = X - Y
-	} else if upperNibble == 0x8 && lowerByte == SHR_V { // 8xy6
+	} else if upperNibble == 0x8 && lowerByte&0x0F == SHR_V { // 8xy6
 		X := m.V[x(op)]
 		if X&0x01 == 0x01 {
 			m.V[0xF] = 1
@@ -223,7 +224,7 @@ func (m *machine) Step() error {
 		}
 		// todo: rounding semantics?
 		m.V[x(op)] = X / 2
-	} else if upperNibble == 0x8 && lowerByte == SUBN_V { // 8xy7
+	} else if upperNibble == 0x8 && lowerByte&0x0F == SUBN_V { // 8xy7
 		X := m.V[x(op)]
 		Y := m.V[y(op)]
 		if Y > X {
@@ -232,7 +233,7 @@ func (m *machine) Step() error {
 			m.V[0xF] = 0
 		}
 		m.V[x(op)] = Y - X
-	} else if upperNibble == 0x8 && lowerByte == SHL_V { // 8xyE
+	} else if upperNibble == 0x8 && lowerByte&0x0F == SHL_V { // 8xyE
 		X := m.V[x(op)]
 		if X&0b10000000 == 0b10000000 {
 			m.V[0xF] = 1
