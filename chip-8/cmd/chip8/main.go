@@ -107,72 +107,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) View() string {
-	box := NewDefaultBoxWithLabel()
-
-	s := m.machine.Screen()
-
-	on := lipgloss.NewStyle().
-		Background(lipgloss.Color("#FAFAFA")).
-		Foreground(lipgloss.Color("#FAFAFA")).
-		Width(1).
-		Height(1).
-		Render("X")
-
-	var b strings.Builder
-
-	for y := 0; y < 32; y++ {
-		for x := 0; x < 8; x++ {
-			b.WriteString(strings.ReplaceAll(strings.ReplaceAll(fmt.Sprintf("%08b", s[y*8+x]), "0", " "), "1", on))
-		}
-		if y < 31 {
-			b.WriteRune('\n')
-		}
-	}
-
-	screenArea := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Render(b.String())
-
-	state := m.machine.State()
-
-	b.Reset()
-	b.WriteString(fmt.Sprintf("PC: 0x%04x | %d\n", state.PC, state.PC))
-	b.WriteString(fmt.Sprintf("SP:   0x%02x | %d\n", state.SP, state.SP))
-	b.WriteString(fmt.Sprintf(" I: 0x%04x | %d\n", state.I, state.I))
-	b.WriteString(fmt.Sprintf("DT:   0x%02x | %d\n", state.DT, state.DT))
-	b.WriteString(fmt.Sprintf("ST:   0x%02x | %d", state.ST, state.ST))
-
-	stateArea := box.Render("State", b.String(), 18)
-
-	b.Reset()
-	for i, r := range state.V {
-		if i < 15 {
-			b.WriteString(fmt.Sprintf("%01x: 0x%02x\n", i, r))
-		} else {
-			b.WriteString(fmt.Sprintf("%01x: 0x%02x", i, r))
-		}
-	}
-
-	registersArea := box.Render("Registers", b.String(), 12)
-
-	b.Reset()
-	if m.lastErr != nil {
-		b.WriteString("!")
-	} else {
-		if m.run {
-			b.WriteString("▶")
-		} else {
-			b.WriteString("⏸")
-		}
-	}
-	b.WriteString(" | ")
-	if m.file != "" {
-		b.WriteString(m.file)
-	} else {
-		b.WriteString("<none>")
-	}
-
 	leftColumn := []string{
-		screenArea,
-		b.String(),
+		m.renderScreen(),
+		m.renderRunbar(),
 		"R - Run  S - Step  P - Pause",
 	}
 
@@ -191,8 +128,92 @@ func (m *model) View() string {
 		),
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			stateArea,
-			registersArea,
+			m.renderState(),
+			m.renderRegisters(),
 		),
 	)
+}
+
+var box BoxWithLabel = NewDefaultBoxWithLabel()
+
+// Build the screen box, 32 high by 64 wide
+func (m *model) renderScreen() string {
+	s := m.machine.Screen()
+
+	// Box value for when the pixel is on
+	on := lipgloss.NewStyle().
+		Background(lipgloss.Color("#FAFAFA")).
+		Foreground(lipgloss.Color("#FAFAFA")).
+		Width(1).
+		Height(1).
+		Render("X")
+
+	var b strings.Builder
+
+	// Iterate over the screen buffer and build the screen
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 8; x++ {
+			b.WriteString(strings.ReplaceAll(strings.ReplaceAll(fmt.Sprintf("%08b", s[y*8+x]), "0", " "), "1", on))
+		}
+		if y < 31 {
+			b.WriteRune('\n')
+		}
+	}
+
+	return lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Render(b.String())
+}
+
+// Render the current machine state
+func (m *model) renderState() string {
+	state := m.machine.State()
+
+	var b strings.Builder
+
+	b.WriteString(fmt.Sprintf("PC: 0x%04x | %d\n", state.PC, state.PC))
+	b.WriteString(fmt.Sprintf("SP:   0x%02x | %d\n", state.SP, state.SP))
+	b.WriteString(fmt.Sprintf(" I: 0x%04x | %d\n", state.I, state.I))
+	b.WriteString(fmt.Sprintf("DT:   0x%02x | %d\n", state.DT, state.DT))
+	b.WriteString(fmt.Sprintf("ST:   0x%02x | %d", state.ST, state.ST))
+
+	return box.Render("State", b.String(), 18)
+}
+
+// Render the current register values
+func (m *model) renderRegisters() string {
+	state := m.machine.State()
+
+	var b strings.Builder
+
+	for i, r := range state.V {
+		if i < 15 {
+			b.WriteString(fmt.Sprintf("%01x: 0x%02x\n", i, r))
+		} else {
+			b.WriteString(fmt.Sprintf("%01x: 0x%02x", i, r))
+		}
+	}
+
+	return box.Render("Registers", b.String(), 12)
+}
+
+// Render the run state bar
+func (m *model) renderRunbar() string {
+	var b strings.Builder
+
+	if m.lastErr != nil {
+		b.WriteString("!")
+	} else {
+		if m.run {
+			b.WriteString("▶")
+		} else {
+			b.WriteString("⏸")
+		}
+	}
+	b.WriteString(" | ")
+	if m.file != "" {
+		b.WriteString(m.file)
+	} else {
+		b.WriteString("<none>")
+	}
+
+	return b.String()
 }
