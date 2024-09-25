@@ -15,12 +15,13 @@ type Machine interface {
 	State() State
 }
 
-func New(pgm []byte) (Machine, error) {
+func New(pgm []byte, keyboard Keyboard) (Machine, error) {
 	if len(pgm) > 3584 { // 4096 - 512
 		return nil, fmt.Errorf("program does not fit in memory: %d > 3584", len(pgm))
 	}
 
 	m := &machine{
+		keyboard: keyboard,
 		memory: [4096]byte{
 			// font 0-F
 			0xF0, 0x90, 0x90, 0x90, 0xF0,
@@ -51,15 +52,16 @@ func New(pgm []byte) (Machine, error) {
 }
 
 type machine struct {
-	memory [4096]uint8
-	screen screen     // Screen buffer 64x32 monopixel
-	stack  [16]uint16 // Stack
-	PC     uint16     // Program counter
-	SP     uint8      // Stack pointer
-	V      [16]uint8  // General purpose registers 0-F
-	I      uint16     // Memory address register (12 bit addresses)
-	DT     uint8      // Delay Timer, decremented at 60hz until 0
-	ST     uint8      // Sound Timer, decremented at 60hz until 0
+	keyboard Keyboard
+	memory   [4096]uint8
+	screen   screen     // Screen buffer 64x32 monopixel
+	stack    [16]uint16 // Stack
+	PC       uint16     // Program counter
+	SP       uint8      // Stack pointer
+	V        [16]uint8  // General purpose registers 0-F
+	I        uint16     // Memory address register (12 bit addresses)
+	DT       uint8      // Delay Timer, decremented at 60hz until 0
+	ST       uint8      // Sound Timer, decremented at 60hz until 0
 }
 
 type State struct {
@@ -256,16 +258,29 @@ func (m *machine) Step() error {
 	} else if upperNibble == DRW { // Dxyn
 		m.screen.Write(m.memory[m.I:m.I+uint16(n(op))], m.V[x(op)], m.V[y(op)])
 	} else if upperNibble == 0xE && lowerByte == SKP { // Ex9E
-		// todo: keyboard
+		keys := m.keyboard.Pressed()
+		for _, k := range keys {
+			if k == m.V[x(op)] {
+				m.PC += 2
+				break
+			}
+		}
 	} else if upperNibble == 0xE && lowerByte == SKNP { // ExA1
-		// todo: keyboard
-		// for now, we will assume no keys are pressed
-		m.PC += 2
+		keys := m.keyboard.Pressed()
+		isPressed := false
+		for _, k := range keys {
+			if k == m.V[x(op)] {
+				isPressed = true
+				break
+			}
+		}
+		if !isPressed {
+			m.PC += 2
+		}
 	} else if upperNibble == 0xF && lowerByte == LD_V_DT { // Fx07
 		m.V[x(op)] = m.DT
 	} else if upperNibble == 0xF && lowerByte == LD_K { // Fx0A
-		// todo: keyboard
-		// m.V[x(op)] = ?
+		m.V[x(op)] = m.keyboard.WaitForPress()
 	} else if upperNibble == 0xF && lowerByte == LD_DT_V { // Fx15
 		m.DT = m.V[x(0)]
 	} else if upperNibble == 0xF && lowerByte == LD_ST_V { // Fx18

@@ -52,7 +52,7 @@ func main() {
 		file = filepath.Base(os.Args[1])
 	}
 
-	m, err := chip8.New(pgm)
+	m, err := chip8.New(pgm, &Keyboard{})
 	if err != nil {
 		panic(err)
 	}
