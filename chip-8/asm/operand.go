@@ -1,6 +1,9 @@
 package asm
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 /**
  * Read a register value from a string.
@@ -82,6 +85,7 @@ var (
 	BCD         Operand = 6
 	KEYPRESS    Operand = 7
 	SPRITE      Operand = 8
+	UNKNOWN     Operand = 9
 )
 
 func operandType(s string) Operand {
@@ -100,12 +104,19 @@ func operandType(s string) Operand {
 		return BCD
 	case "K":
 		return KEYPRESS
-	case "F": // TODO: this will collide with 16 -> F
+	case "F":
 		return SPRITE
 	}
+
+	s = strings.TrimPrefix(s, "0X")
 
 	if len(s) == 3 {
 		return ADDRESS
 	}
-	return BYTE
+
+	if len(s) == 2 {
+		return BYTE
+	}
+
+	return UNKNOWN
 }
