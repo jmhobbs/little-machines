@@ -36,10 +36,6 @@ func main() {
 
 		instruction, operands := parseLine(line)
 
-		if len(operands) > 2 {
-			log.Fatalf("too many operands on line %d", ctr)
-		}
-
 		opcodes, err := asm.Encode(instruction, operands)
 		if err != nil {
 			log.Fatalf("%v on line %d", err, ctr)
@@ -76,9 +72,13 @@ func parseLine(line string) (string, []string) {
 	if len(operand) > 0 {
 		operands = append(operands, strings.TrimSpace(strings.ToUpper(operand)))
 	}
-	back = strings.TrimSpace(back)
-	if len(back) > 0 {
-		operands = append(operands, strings.ToUpper(back))
+
+	backOperands := strings.Split(back, ",")
+	for _, operand := range backOperands {
+		operand = strings.TrimSpace(operand)
+		if len(operand) > 0 {
+			operands = append(operands, strings.ToUpper(operand))
+		}
 	}
 
 	return strings.ToUpper(instruction), operands
