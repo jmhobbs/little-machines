@@ -53,6 +53,7 @@ func registerValue(a, b string) (uint8, uint8, error) {
  */
 func value(a string) (uint8, error) {
 	var v uint8
+	a = strings.TrimPrefix(a, "0X")
 	_, err := fmt.Sscanf(a, "%x", &v)
 	if err != nil {
 		return 0, fmt.Errorf("invalid value %q", a)
@@ -66,29 +67,29 @@ func value(a string) (uint8, error) {
  */
 func address(v string) (uint16, error) {
 	var n uint16
+	v = strings.TrimPrefix(v, "0X")
 	_, err := fmt.Sscanf(v, "%x", &n)
 	if err != nil || n > 4095 {
-		return 0, fmt.Errorf("invalid address %q", v)
+		return 0, fmt.Errorf("invalid address %q %d", v, n)
 	}
 	return n, err
 }
 
-type Operand uint8
+type OperandType string
 
 var (
-	REGISTER    Operand = 0
-	BYTE        Operand = 1
-	ADDRESS     Operand = 2
-	DELAY_TIMER Operand = 3
-	SOUND_TIMER Operand = 4
-	I_REGISTER  Operand = 5
-	BCD         Operand = 6
-	KEYPRESS    Operand = 7
-	SPRITE      Operand = 8
-	UNKNOWN     Operand = 9
+	REGISTER    OperandType = "REGISTER"
+	BYTE        OperandType = "BYTE"
+	ADDRESS     OperandType = "ADDRESS"
+	DELAY_TIMER OperandType = "DELAY_TIMER"
+	SOUND_TIMER OperandType = "SOUND_TIMER"
+	I_REGISTER  OperandType = "I_REGISTER"
+	BCD         OperandType = "BCD"
+	KEYPRESS    OperandType = "KEYPRESS"
+	FONT        OperandType = "FONT"
 )
 
-func operandType(s string) Operand {
+func operandType(s string) OperandType {
 	if s[0] == 'V' {
 		return REGISTER
 	}
@@ -100,12 +101,12 @@ func operandType(s string) Operand {
 		return SOUND_TIMER
 	case "I":
 		return I_REGISTER
-	case "B":
+	case "BCD":
 		return BCD
-	case "K":
+	case "KEY":
 		return KEYPRESS
-	case "F":
-		return SPRITE
+	case "FONT":
+		return FONT
 	}
 
 	s = strings.TrimPrefix(s, "0X")
@@ -114,9 +115,6 @@ func operandType(s string) Operand {
 		return ADDRESS
 	}
 
-	if len(s) == 2 {
-		return BYTE
-	}
+	return BYTE
 
-	return UNKNOWN
 }
