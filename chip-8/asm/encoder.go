@@ -12,35 +12,44 @@ type encoding struct {
 	encoder  encoder
 }
 
-// TODO: Aliasing.  CLEAR -> CLS, RETURN -> RET
+var instructionAliases = map[string]string{
+	"CLS": "CLEAR",
+	"RET": "RETURN",
+	"JMP": "JUMP",
+	"SE":  "SKIP",
+	"SNE": "SKIPN",
+	"LD":  "LOAD",
+	"SHR": "SHIFTR",
+	"SHL": "SHIFTL",
+}
 
 var instructions = map[string][]encoding{
-	"CLS": {
+	"CLEAR": {
 		{
 			encoder: func([]string) ([]byte, error) {
 				return []byte{0x00, 0xE0}, nil
 			},
 		},
 	},
-	"RET": {
+	"RETURN": {
 		{
 			encoder: func([]string) ([]byte, error) {
 				return []byte{0x00, 0xEE}, nil
 			},
 		},
 	},
-	"JMP": {
+	"JUMP": {
 		addressEncoding(0x10),
 		// V0, addr - Bnnn
 	},
 	"CALL": {
 		addressEncoding(0x20),
 	},
-	"SE": {
+	"SKIP": {
 		registerByteEncoding(0x30),
 		twoRegisterEncoding(0x50, 0x00),
 	},
-	"SNE": {
+	"SKIPN": {
 		registerByteEncoding(0x40),
 		twoRegisterEncoding(0x90, 0x00),
 	},
@@ -104,13 +113,13 @@ var instructions = map[string][]encoding{
 	"SUB": {
 		twoRegisterEncoding(0x80, 0x05),
 	},
-	"SHR": {
+	"SHIFTR": {
 		oneRegisterEncoding(0x80, 0x06),
 	},
 	"SUBN": {
 		twoRegisterEncoding(0x80, 0x07),
 	},
-	"SHL": {
+	"SHIFTL": {
 		oneRegisterEncoding(0x80, 0x0E),
 	},
 	"RAND": {
@@ -119,10 +128,10 @@ var instructions = map[string][]encoding{
 	"DRAW": {
 		twoRegisterNibbleEncoding(0xD0),
 	},
-	"SKIP": {
+	"SKIPP": {
 		oneRegisterEncoding(0xE0, 0x9E),
 	},
-	"SKIPN": {
+	"SKIPNP": {
 		oneRegisterEncoding(0xE0, 0xA1),
 	},
 }
@@ -131,6 +140,10 @@ var instructions = map[string][]encoding{
  * Validate and encode an instruction and operands into opcodes.
  */
 func Encode(instruction string, operands []string) ([]byte, error) {
+	if alias, ok := instructionAliases[instruction]; ok {
+		instruction = alias
+	}
+
 	op, ok := instructions[instruction]
 	if !ok {
 		return nil, fmt.Errorf("unknown instruction %q", instruction)
